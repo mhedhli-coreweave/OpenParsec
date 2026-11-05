@@ -19,8 +19,9 @@ have SAML configured for the team. Password/2FA sign-in remains available.
 - POST `/v2/saml/session` with the returned `saml_request_id`, every two seconds,
   until a session is returned, a terminal error occurs, or the deadline expires.
 - Treat HTTP 202 as pending, and HTTP 200/201 with a nonempty `session_id` as
-  successful. Other statuses stop the attempt. The pending status still needs
-  confirmation with an actual team; it has not been observed in a live login.
+  successful. Other statuses stop the attempt. HTTP 201 with a browser URL and
+  request ID, followed by HTTP 202 while awaiting approval, was verified against
+  a real team on 2026-11-05 without completing identity-provider authentication.
 - Store the response in the same Keychain item as password sessions. Legacy
   hosting metadata is optional because v2 sessions may omit it.
 - No IdP passwords, cookies, SAML assertions, or pasted session tokens are read
@@ -67,11 +68,10 @@ provisioning and signing before installation.
 
 Still required before calling this end-to-end verified:
 
-1. A real team's start response and pending-session response.
-2. Sign-in, MFA, session exchange, and host listing on the iPhone.
-3. Cancellation, browser dismissal/reopening, timeout, and background/foreground
+1. Sign-in, MFA, session exchange, and host listing on the iPhone.
+2. Cancellation, browser dismissal/reopening, timeout, and background/foreground
    transitions on the device, including identity-provider policy compatibility.
-4. Relaunch/session restoration and streaming to an authorized host.
+3. Relaunch/session restoration and streaming to an authorized host.
 
 The existing installed app and its automatic renewal source IPA have not been
 replaced. After device validation, replace the renewal source with this build so
