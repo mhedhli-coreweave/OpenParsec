@@ -6,6 +6,12 @@ This project is still a major WIP, so apologies for the currently lackluster doc
 
 Before building, make sure you have the Parsec SDK framework symlinked or copied to the `Frameworks` folder. Builds were tested on Xcode Version 12.5.
 
+## SAML SSO (fork)
+
+This fork adds a browser-based **Sign in with SAML SSO** option for Parsec Teams.
+See [SAML setup, protocol notes, and validation status](docs/SAML.md).
+Real-team/device sign-in validation is still pending.
+
 ## Downloads
 <a href="https://stikstore.app/altdirect/?url=https://github.com/hugeBlack/OpenParsec/releases/download/nightly/altstore.json" target="_blank">
    <img src="https://raw.githubusercontent.com/StikStore/altdirect/refs/heads/main/assets/png/AltSource_Blue.png" alt="Add AltSource" width="200">

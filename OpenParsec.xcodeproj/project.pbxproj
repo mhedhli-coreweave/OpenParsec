@@ -42,6 +42,8 @@
 		E76224A12F8C017F00A2F86F /* ParsecBackgroundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E76224A02F8C017700A2F86F /* ParsecBackgroundManager.swift */; };
 		E762250B2F8D0A0100A2F86F /* PictureInPictureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E762250A2F8D0A0000A2F86F /* PictureInPictureManager.swift */; };
 		FC16A7AD29A97BDA00BB70A7 /* Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC16A7AC29A97BDA00BB70A7 /* Shared.swift */; };
+		F00200000000000000000001 /* SAMLAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000001; };
+		F00200000000000000000002 /* SAMLLoginModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00100000000000000000002; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -97,6 +99,8 @@
 		E76224A02F8C017700A2F86F /* ParsecBackgroundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsecBackgroundManager.swift; sourceTree = "<group>"; };
 		E762250A2F8D0A0000A2F86F /* PictureInPictureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PictureInPictureManager.swift; sourceTree = "<group>"; };
 		FC16A7AC29A97BDA00BB70A7 /* Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared.swift; sourceTree = "<group>"; };
+		F00100000000000000000001 /* SAMLAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SAMLAuthClient.swift; sourceTree = "<group>"; };
+		F00100000000000000000002 /* SAMLLoginModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SAMLLoginModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -157,6 +161,8 @@
 				17EEB91B2BEE62BA00502A3A /* KeyBoardTest.swift */,
 				27E61A9C292965FD00FF6563 /* LaunchScreen.storyboard */,
 				27E61AA52929817700FF6563 /* LoginView.swift */,
+				F00100000000000000000002 /* SAMLLoginModel.swift */,
+				F00100000000000000000001 /* SAMLAuthClient.swift */,
 				27E61AA92929B92200FF6563 /* MainView.swift */,
 				27ED36FE292D4F9800B1BE3D /* NetworkHandler.swift */,
 				27899AC4292FE2A8001ACA33 /* OpenParsec-Bridging-Header.h */,
@@ -304,6 +310,8 @@
 				27AD36602B19731800C8A607 /* ExUI.swift in Sources */,
 				27899AC7292FE2A9001ACA33 /* audio.c in Sources */,
 				27E61AA62929817700FF6563 /* LoginView.swift in Sources */,
+				F00200000000000000000002 /* SAMLLoginModel.swift in Sources */,
+				F00200000000000000000001 /* SAMLAuthClient.swift in Sources */,
 				27B8D564292DC7A000A324AD /* CParsec.swift in Sources */,
 				27A923E229E8FEE900F54BDA /* UIViewControllerWrapper.swift in Sources */,
 				170E0A772BEF5AFF00B0EA32 /* ParsecViewController.swift in Sources */,

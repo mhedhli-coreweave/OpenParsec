@@ -4,6 +4,10 @@ import os
 struct LoginView: View {
 	var controller: ContentView?
 
+	@StateObject private var saml = SAMLLoginModel()
+	@State private var useSAML = false
+	@AppStorage("samlTeamAlias") private var teamAlias = ""
+
 	@State var inputEmail: String = ""
 	@State var inputPassword: String = ""
 	@State var inputTFA: String = ""
@@ -36,34 +40,43 @@ struct LoginView: View {
 						.padding([.top, .bottom, .trailing])
 				}
 				.frame(height: 80)
-				TextField("Email", text: $inputEmail)
-					.padding()
-					.background(Rectangle().fill(Color("BackgroundField")))
-					.cornerRadius(8)
-					.disableAutocorrection(true)
-					.autocapitalization(/*@START_MENU_TOKEN@*/.none/*@END_MENU_TOKEN@*/)
-					.keyboardType(.emailAddress)
-					.textContentType(.emailAddress)
-				SecureField("Password", text: $inputPassword, onCommit: { authenticate() })
-					.padding()
-					.background(Rectangle().fill(Color("BackgroundField")))
-					.cornerRadius(8)
-					.disableAutocorrection(true)
-					.autocapitalization(/*@START_MENU_TOKEN@*/.none/*@END_MENU_TOKEN@*/)
-					.textContentType(.password)
-				Button(action: {authenticate()}) {
-					ZStack {
-						Rectangle()
-							.fill(Color("AccentColor"))
-							.cornerRadius(8)
-						Text("Login")
-							.foregroundColor(.white)
+				if useSAML {
+					samlControls
+				} else {
+					TextField("Email", text: $inputEmail)
+						.padding()
+						.background(Rectangle().fill(Color("BackgroundField")))
+						.cornerRadius(8)
+						.disableAutocorrection(true)
+						.autocapitalization(/*@START_MENU_TOKEN@*/.none/*@END_MENU_TOKEN@*/)
+						.keyboardType(.emailAddress)
+						.textContentType(.emailAddress)
+					SecureField("Password", text: $inputPassword, onCommit: { authenticate() })
+						.padding()
+						.background(Rectangle().fill(Color("BackgroundField")))
+						.cornerRadius(8)
+						.disableAutocorrection(true)
+						.autocapitalization(/*@START_MENU_TOKEN@*/.none/*@END_MENU_TOKEN@*/)
+						.textContentType(.password)
+					Button(action: {authenticate()}) {
+						ZStack {
+							Rectangle()
+								.fill(Color("AccentColor"))
+								.cornerRadius(8)
+							Text("Login")
+								.foregroundColor(.white)
+						}
+						.frame(height: 54)
 					}
-					.frame(height: 54)
-				}
-			}
+                }
+                Button(useSAML ? "Use email and password" : "Sign in with SAML SSO") {
+                    saml.cancel()
+                    useSAML.toggle()
+                }
+                .padding(.top, 12)
+            }
 
-			.padding()
+            .padding()
 			.frame(maxWidth: 400)
 			.disabled(isLoading) // Disable when loading
 
@@ -126,26 +139,85 @@ struct LoginView: View {
 		.alert(isPresented: $showAlert) {
 			Alert(title: Text("Login Failed"), message: Text(alertText))
 		}
-		.onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in retryRestore() }
+		.sheet(item: $saml.browser, onDismiss: { saml.resume() }) { browser in
+            SAMLBrowserView(url: browser.url).edgesIgnoringSafeArea(.all)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            saml.resume()
+            retryRestore()
+        }
+        .onDisappear { saml.cancel() }
 		.onReceive(NotificationCenter.default.publisher(for: UIApplication.protectedDataDidBecomeAvailableNotification)) { _ in retryRestore() }
 	}
 
+    private var samlControls: some View {
+        VStack(spacing: 12) {
+            TextField("Team ID or SAML alias", text: $teamAlias)
+                .padding()
+                .background(Color("BackgroundField"))
+                .cornerRadius(8)
+                .disableAutocorrection(true)
+                .autocapitalization(.none)
+                .disabled(saml.isLoading || saml.waiting)
+                .accessibilityIdentifier("samlTeamAlias")
+            Text("Use the team ID or alias supplied by your Parsec administrator.")
+                .font(.footnote)
+            if saml.waiting {
+                Text("Complete sign-in in the browser, then return here. This request expires after five minutes.")
+                Button("Continue in browser") { saml.reopenBrowser() }
+            } else {
+                Button(saml.isLoading ? "Starting sign-in…" : "Continue with SAML") {
+                    saml.start(team: teamAlias) { data in completeLogin(data) }
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color("AccentColor"))
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                .disabled(saml.isLoading || teamAlias.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .accessibilityIdentifier("samlSignIn")
+            }
+            if saml.isLoading || saml.waiting {
+                Button("Cancel sign-in") { saml.cancel() }
+            }
+            if let message = saml.errorMessage {
+                Text(message).foregroundColor(.red).font(.footnote)
+            }
+        }
+    }
+
+    private func completeLogin(_ data: Data) {
+        guard let info = try? JSONDecoder().decode(ClientInfo.self, from: data), !info.session_id.isEmpty else {
+            alertText = "Bad response from the server"
+            showAlert = true
+            return
+        }
+        guard saveToKeychain(data: data, key: GLBDataModel.shared.SessionKeyChainKey) else { return }
+        NetworkHandler.clinfo = info
+        controller?.setView(.main)
+    }
+
 	func retryRestore() {
-		if !isLoading && !presentTFAAlert, let c = controller {
+		if !isLoading && !presentTFAAlert && !saml.isLoading && !saml.waiting, let c = controller {
 			c.retryRestore()
 		}
 	}
 
-	func saveToKeychain(data: Data, key: String) {
-		SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrAccount as String: key] as CFDictionary)
-		let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrAccount as String: key, kSecValueData as String: data, kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock]
-		let status = SecItemAdd(query as CFDictionary, nil)
-		guard status == errSecSuccess else {
-			print("Error saving to Keychain: \(status)")
-			return
-		}
-		print("Data saved to Keychain.")
-	}
+	@discardableResult
+    func saveToKeychain(data: Data, key: String) -> Bool {
+        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrAccount as String: key]
+        let attributes: [String: Any] = [kSecValueData as String: data, kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock]
+        var status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        if status == errSecItemNotFound {
+            status = SecItemAdd(query.merging(attributes) { _, value in value } as CFDictionary, nil)
+        }
+        guard status == errSecSuccess else {
+            alertText = "Could not securely save your session. Unlock the device and try again."
+            showAlert = true
+            return false
+        }
+        return true
+    }
 
 	func authenticate(_ tfa: String? = "") {
 		#if DEBUG
@@ -184,20 +256,8 @@ struct LoginView: View {
 					let decoder = JSONDecoder()
 
 					if statusCode == 201 { // 201 Created
-						// store it and recover it from the next app opening, so people won't swear
-						guard let info: ClientInfo = try? decoder.decode(ClientInfo.self, from: data) else {
-							alertText = "Bad response from the server"
-							showAlert = true
-							return
-						}
-						NetworkHandler.clinfo = info
-
-						saveToKeychain(data: data, key: GLBDataModel.shared.SessionKeyChainKey)
-
-						if let c = controller {
-							print("*** Login succeeded! ***")
-							c.setView(.main)
-						}
+						presentTFAAlert = false
+						completeLogin(data)
 					} else if statusCode >= 400 { // 4XX client errors
 						guard let info: ErrorInfo = try? decoder.decode(ErrorInfo.self, from: data) else {
 							alertText = "Login failed (HTTP \(statusCode))"
