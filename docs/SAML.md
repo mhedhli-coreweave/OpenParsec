@@ -24,6 +24,9 @@ have SAML configured for the team. Password/2FA sign-in remains available.
   a real team on 2026-11-05 without completing identity-provider authentication.
 - Store the response in the same Keychain item as password sessions. Legacy
   hosting metadata is optional because v2 sessions may omit it.
+- API calls use the same compatibility User-Agent as upstream password login.
+  Live testing found that a custom OpenParsec User-Agent receives an HTML 403
+  before the SAML API responds.
 - No IdP passwords, cookies, SAML assertions, or pasted session tokens are read
   by the app. The API session is ephemeral and does not follow redirects.
 - The team alias is remembered in preferences; request IDs stay in memory.

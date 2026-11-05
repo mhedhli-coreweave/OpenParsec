@@ -14,6 +14,7 @@ func data(_ object: [String: Any]) -> Data { try! JSONSerialization.data(withJSO
 let login = try SAMLAuthClient.loginRequest(team: "  example-team_1\n")
 check(login.url?.absoluteString == "https://kessel-api.parsec.app/v2/saml/login/example-team_1", "Trim team alias")
 check(login.httpMethod == "POST", "Login uses POST")
+check(login.value(forHTTPHeaderField: "User-Agent") == "parsec/150-93b Windows/11 libmatoya/4.0", "Preserve API-compatible user agent")
 let body = try JSONSerialization.jsonObject(with: login.httpBody!) as! [String: [String]]
 check(body["session_scopes"] == ["ws.client", "api.writer"], "No host or team-admin scopes")
 for invalid in ["", "  ", "../other", "a/b", "a?b", "a#b", "a%2Fb", "https://example.com", "m@example.com", "é", String(repeating: "a", count: 129)] {

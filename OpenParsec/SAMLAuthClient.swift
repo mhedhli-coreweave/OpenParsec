@@ -59,7 +59,9 @@ final class SAMLAuthClient: NSObject, URLSessionTaskDelegate {
         var request = URLRequest(url: URL(string: "https://kessel-api.parsec.app\(path)")!)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("OpenParsec/1.4 iOS", forHTTPHeaderField: "User-Agent")
+        // Match the compatibility header used by the existing Parsec API calls.
+        // A custom OpenParsec user agent is rejected with an HTML HTTP 403.
+        request.setValue("parsec/150-93b Windows/11 libmatoya/4.0", forHTTPHeaderField: "User-Agent")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         return request
     }
